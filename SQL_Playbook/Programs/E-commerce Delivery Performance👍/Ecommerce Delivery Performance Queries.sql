@@ -94,7 +94,6 @@ left join Order_items oi on p.product_id = oi.product_id
 where oi.product_id is null
 
 
-
 -- Q-16) Find total revenue for each product category.
 select p.category, sum(oi.quantity * oi.line_total) as total_revenue from Products p
 join Order_items oi on oi.product_id = p.product_id
