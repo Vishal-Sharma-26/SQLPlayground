@@ -46,12 +46,26 @@ where status = 'Pending' and datediff(day, order_date, getdate()) > 5
 
 
 -- Q-9) Count deliveries handled by each partner.
+select delivery_partner, count(*) as total_deliveries from Delivery
+group by delivery_partner
 
 
--- Q-10) Calculate average delivery time for each city.
+-- Q-10) Rank cities by total number of orders delivered.
+select c.city,
+    count(o.order_id) AS total_delivered_orders,
+    rank() over (order by count(o.order_id) desc) as city_rank
+FROM Customers c
+join Orders o on o.customer_id = c.customer_id
+where status = 'Delivered'
+group by c.city
+order by total_delivered_orders desc
 
 
 -- Q-11) Identify cities with the slowest delivery.
+select d.delivery_city, datediff(day, d.delivered_date, o.order_date) as delivery_days from Orders o
+join Delivery d on d.order_id = o.order_id
+group by d.delivery_city, datediff(day, d.delivered_date, o.order_date)
+order by delivery_days desc
 
 
 -- Q-12) Find orders with shipped_date missing.
@@ -68,9 +82,17 @@ order by revenue desc
 
 
 -- Q-14) Count how many times each category was ordered.
+select p.category, count(oi.order_id) as total_orders from Products p
+join Order_items oi on oi.product_id = p.product_id
+group by p.category
+order by total_orders desc
 
 
 -- Q-15) Find products that were never purchased.
+select p.product_id, p.product_name from Products p
+left join Order_items oi on p.product_id = oi.product_id
+where oi.product_id is null
+
 
 
 -- Q-16) Find total revenue for each product category.
@@ -81,18 +103,39 @@ order by total_revenue desc
 
 
 -- Q-17) Find total delivery time for each order.
+select o.order_id, datediff(hour, o.order_date, d.delivered_date) as total_delivery_time_hours from Orders o
+join Delivery d on d.order_id = o.order_id
+group by o.order_id, datediff(hour, o.order_date, d.delivered_date)
+order by total_delivery_time_hours desc
 
 
 -- Q-18) Find customers who placed orders but never received delivery.
+select distinct c.customer_id, c.name from Customers c
+join Orders o on o.customer_id = c.customer_id
+left join Delivery d on d.order_id = o.order_id
+where d.delivered_date is null
 
 
 -- Q-19) Find the partner with the fastest delivery on average.
+select d.delivery_partner, avg(datediff(day, o.order_date, d.delivered_date)) as delivery_days from Delivery d
+join Orders o on o.order_id = d.order_id
+group by d.delivery_partner
+order by delivery_days
 
 
--- Q-20) Count how many orders were delayed by partner.
+-- Q-20) Count how many orders were shipped by partner.
+select d.delivery_partner, count(o.order_id) as shipped_orders from Delivery d
+join Orders o on o.order_id = d.order_id
+where o.status = 'Shipped'
+group by d.delivery_partner
+order by shipped_orders desc
 
 
 -- Q-21) Find customer lifetime value.
+select customer_id, count(order_id) as total_orders, sum(total_amount) as lifetime_value, avg(total_amount) as avg_order_value
+from Orders
+group by customer_id
+order by lifetime_value desc
 
 
 -- Q-22) Find most profitable city.
@@ -103,6 +146,10 @@ order by total_amount desc
 
 
 -- Q-23) Find delivery time trends by month.
+select datename(month, o.order_date) as month, avg(datediff(hour, o.order_date, d.delivered_date)) as delivery_time_by_hours from Delivery d
+join Orders o on o.order_id = d.order_id
+group by datename(month, o.order_date)
+order by delivery_time_by_hours desc
 
 
 -- Q-24) Compare canceled vs processing rates.
