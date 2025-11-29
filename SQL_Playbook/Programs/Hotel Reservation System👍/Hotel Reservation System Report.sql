@@ -71,9 +71,12 @@ group by guest_id
 order by total_nights desc
 
 
--- Q-13) Identify guests with unpaid or pending payments.
-select * from Payments
-select * from Reservations
+-- Q-13) Identify guests who paid more than 20,000 online or by card
+select distinct g.guest_id, g.first_name, g.last_name, p.amount from Guests g
+join Reservations r on r.guest_id = g.guest_id
+join Payments p on p.reservation_id = r.reservation_id
+where p.method in ('Online', 'Card') and p.amount > 20000
+order by p.amount desc
 
 
 -- Q-14) Show the most popular room type based on bookings.
